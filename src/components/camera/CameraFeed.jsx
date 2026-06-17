@@ -1,24 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useDashboard } from '../../context/DashboardContext';
 
-const MOCK_DETECTIONS = [
-  { label: 'Chemical Spill', confidence: 0.92, box: { x: 15, y: 20, w: 35, h: 30 }, isAnomaly: true },
-  { label: 'Beaker (Normal)', confidence: 0.88, box: { x: 60, y: 50, w: 20, h: 25 }, isAnomaly: false },
-];
+// Change to Pi's IP when running on Pi, e.g. 'http://10.50.150.64:5000'
+const STREAM_URL = 'http://localhost:5000/video_feed';
 
 export default function CameraFeed() {
   const { state } = useDashboard();
-  const [fps, setFps] = useState(28);
+  const [fps, setFps] = useState(0);
   const [quality, setQuality] = useState('high');
   const [recording, setRecording] = useState(false);
   const [showOverlay, setShowOverlay] = useState(true);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setFps(Math.floor(25 + Math.random() * 8));
-    }, 1500);
-    return () => clearInterval(timer);
-  }, []);
+  const [streamConnected, setStreamConnected] = useState(false);
 
   const connected = state.robotStatus.camera === 'Connected';
 
@@ -27,9 +19,8 @@ export default function CameraFeed() {
       <div className="camera-feed__header">
         <span>Live Camera Feed</span>
         <div className="camera-feed__controls">
-          <span className={`status-dot ${connected ? 'status-dot--green' : 'status-dot--red'}`} />
-          <span className="muted">{connected ? 'Connected' : 'Disconnected'}</span>
-          <span className="fps-badge">FPS: {fps}</span>
+          <span className={`status-dot ${streamConnected ? 'status-dot--green' : 'status-dot--red'}`} />
+          <span className="muted">{streamConnected ? 'Connected' : 'Disconnected'}</span>
           <select value={quality} onChange={(e) => setQuality(e.target.value)} className="select-sm">
             <option value="high">High</option>
             <option value="medium">Medium</option>
@@ -45,37 +36,15 @@ export default function CameraFeed() {
       </div>
 
       <div className="camera-feed__viewport">
-        {/* Simulated video frame */}
         <div className="camera-feed__frame">
           <img
-            src="https://placehold.co/640x360/0a0e1a/1a2a4a?text=OAK-D+Live+Feed+(Simulated)"
-            alt="Camera feed"
+            src={STREAM_URL}
+            alt="OAK-D Live Feed"
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            onLoad={() => setStreamConnected(true)}
+            onError={() => setStreamConnected(false)}
           />
-
-          {showOverlay && connected && MOCK_DETECTIONS.map((det, i) => (
-            <div
-              key={i}
-              className="detection-box"
-              style={{
-                left: `${det.box.x}%`,
-                top: `${det.box.y}%`,
-                width: `${det.box.w}%`,
-                height: `${det.box.h}%`,
-                borderColor: det.isAnomaly ? '#e94560' : '#4caf50',
-              }}
-            >
-              <span
-                className="detection-label"
-                style={{ background: det.isAnomaly ? '#e94560' : '#4caf50' }}
-              >
-                {det.label} {(det.confidence * 100).toFixed(0)}%
-              </span>
-            </div>
-          ))}
-
           {recording && <div className="rec-indicator">⏺ REC</div>}
-
           <div className="camera-feed__latency">
             Latency: {state.robotStatus.latency}ms
           </div>
@@ -89,7 +58,7 @@ export default function CameraFeed() {
         >
           {recording ? '⏹ Stop Recording' : '⏺ Record'}
         </button>
-        <span className="muted">Resolution: 1280×720</span>
+        <span className="muted">Resolution: 640×640</span>
       </div>
     </div>
   );
