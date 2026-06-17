@@ -2,54 +2,41 @@ import { useState, useMemo } from 'react';
 import { useDashboard } from '../../context/DashboardContext';
 import AlertCard from './AlertCard';
 import AlertFilters from './AlertFilters';
-import { ANOMALY_TYPES, ZONES } from '../../data/mockData';
 
 export default function AlertPanel() {
   const { state } = useDashboard();
-  const [filters, setFilters] = useState({
-    status: 'all',
-    type: 'all',
-    confidence: 'all',
-    search: '',
-  });
-  const [sort, setSort] = useState('newest');
+  const [filters, setFilters] = useState({ status: 'all' });
 
   const unreadCount = state.alerts.filter((a) => a.status === 'new').length;
 
   const filtered = useMemo(() => {
     let list = [...state.alerts];
-    if (filters.status !== 'all') list = list.filter((a) => a.status === filters.status);
-    if (filters.type !== 'all') list = list.filter((a) => a.type === filters.type);
-    if (filters.confidence === 'high') list = list.filter((a) => a.confidence >= 0.85);
-    if (filters.confidence === 'medium') list = list.filter((a) => a.confidence >= 0.6 && a.confidence < 0.85);
-    if (filters.confidence === 'low') list = list.filter((a) => a.confidence < 0.6);
-    if (filters.search) {
-      const q = filters.search.toLowerCase();
-      list = list.filter((a) => a.type.toLowerCase().includes(q) || a.zone.toLowerCase().includes(q));
+    if (filters.status === 'active') {
+      list = list.filter((a) => a.status === 'acknowledged' || a.status === 'escalated');
+    } else if (filters.status === 'done') {
+      list = list.filter((a) => a.status === 'resolved' || a.status === 'dismissed');
+    } else if (filters.status !== 'all') {
+      list = list.filter((a) => a.status === filters.status);
     }
-    if (sort === 'newest') list.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-    if (sort === 'confidence') list.sort((a, b) => b.confidence - a.confidence);
+    list.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
     return list;
-  }, [state.alerts, filters, sort]);
+  }, [state.alerts, filters]);
 
   return (
     <aside className="alert-panel">
       <div className="alert-panel__header">
-        <h2>
+        <div className="alert-panel__title">
           Alerts
           {unreadCount > 0 && <span className="badge badge--red">{unreadCount}</span>}
-        </h2>
-        <select value={sort} onChange={(e) => setSort(e.target.value)} className="select-sm">
-          <option value="newest">Newest</option>
-          <option value="confidence">Confidence</option>
-        </select>
+        </div>
+        <span className="alert-panel__count">{filtered.length} shown</span>
       </div>
 
-      <AlertFilters filters={filters} onChange={setFilters} anomalyTypes={ANOMALY_TYPES} />
+      <AlertFilters filters={filters} onChange={setFilters} />
 
       <div className="alert-list">
         {filtered.length === 0 ? (
-          <p className="empty-state">No alerts match your filters.</p>
+          <p className="empty-state">No alerts.</p>
         ) : (
           filtered.map((alert) => <AlertCard key={alert.id} alert={alert} />)
         )}

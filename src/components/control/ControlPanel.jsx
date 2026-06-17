@@ -4,58 +4,51 @@ import { useDashboard } from '../../context/DashboardContext';
 export default function ControlPanel() {
   const { state, dispatch } = useDashboard();
   const [threshold, setThreshold] = useState(state.threshold);
-  const [tempMax, setTempMax] = useState(28);
-  const [humMax, setHumMax] = useState(60);
-
-  function applyThreshold() {
-    dispatch({ type: 'SET_THRESHOLD', value: threshold });
-  }
 
   return (
     <div className="control-panel">
-      <h3>Control & Configuration</h3>
+      <p className="control-panel__title">Control</p>
 
-      <section className="control-section">
-        <h4>Patrol Control</h4>
+      <div className="control-section">
+        <p className="control-section__title">Patrol</p>
         <div className="control-buttons">
           <button
-            className="btn btn--green"
+            className="btn btn--ok"
             onClick={() => dispatch({ type: 'UPDATE_ROBOT_STATUS', payload: { state: 'Patrolling' } })}
           >
-            ▶ Start
+            Start
           </button>
           <button
-            className="btn btn--orange"
+            className="btn btn--warn"
             onClick={() => dispatch({ type: 'UPDATE_ROBOT_STATUS', payload: { state: 'Idle' } })}
           >
-            ⏸ Pause
+            Pause
           </button>
           <button
-            className="btn btn--red"
+            className="btn btn--ghost"
             onClick={() => dispatch({ type: 'UPDATE_ROBOT_STATUS', payload: { state: 'Idle' } })}
           >
-            ⏹ Stop
+            Stop
           </button>
         </div>
-
         <div className="emergency-row">
           <button
             className="btn btn--red btn--lg"
             onClick={() => dispatch({ type: 'UPDATE_ROBOT_STATUS', payload: { state: 'Error' } })}
           >
-            ⚠ Emergency Stop
+            Emergency Stop
           </button>
           <button
             className="btn btn--ghost"
             onClick={() => dispatch({ type: 'UPDATE_ROBOT_STATUS', payload: { state: 'Charging' } })}
           >
-            ↩ Return to Base
+            Return to Base
           </button>
         </div>
-      </section>
+      </div>
 
-      <section className="control-section">
-        <h4>Detection Threshold</h4>
+      <div className="control-section">
+        <p className="control-section__title">Detection Threshold</p>
         <div className="slider-row">
           <input
             type="range"
@@ -65,39 +58,19 @@ export default function ControlPanel() {
             value={threshold}
             onChange={(e) => setThreshold(parseFloat(e.target.value))}
           />
-          <span>{(threshold * 100).toFixed(0)}%</span>
+          <span className="slider-value">{(threshold * 100).toFixed(0)}%</span>
         </div>
-        <p className="muted">Min confidence to trigger alert</p>
-        <button className="btn btn--primary btn--sm" onClick={applyThreshold}>Apply</button>
-      </section>
+        <span className="muted" style={{ fontSize: 11 }}>Min confidence to trigger an alert</span>
+        <button
+          className="btn btn--primary btn--sm"
+          onClick={() => dispatch({ type: 'SET_THRESHOLD', value: threshold })}
+        >
+          Apply
+        </button>
+      </div>
 
-      <section className="control-section">
-        <h4>Environmental Thresholds</h4>
-        <div className="env-threshold-row">
-          <label>Max Temp (°C)</label>
-          <input
-            type="number"
-            value={tempMax}
-            onChange={(e) => setTempMax(+e.target.value)}
-            className="input-sm"
-            style={{ width: 80 }}
-          />
-        </div>
-        <div className="env-threshold-row">
-          <label>Max Humidity (%)</label>
-          <input
-            type="number"
-            value={humMax}
-            onChange={(e) => setHumMax(+e.target.value)}
-            className="input-sm"
-            style={{ width: 80 }}
-          />
-        </div>
-        <button className="btn btn--primary btn--sm">Save Thresholds</button>
-      </section>
-
-      <section className="control-section">
-        <h4>Notifications</h4>
+      <div className="control-section">
+        <p className="control-section__title">Notifications</p>
         <label className="toggle-row">
           <span>Enable Alerts</span>
           <input
@@ -106,7 +79,7 @@ export default function ControlPanel() {
             onChange={() => dispatch({ type: 'TOGGLE_NOTIFICATIONS' })}
           />
         </label>
-      </section>
+      </div>
     </div>
   );
 }

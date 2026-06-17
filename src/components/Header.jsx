@@ -1,28 +1,44 @@
+import { useState, useEffect } from 'react';
 import { useDashboard } from '../context/DashboardContext';
-import { getBatteryColor } from '../utils/helpers';
 
 export default function Header({ activeTab, onTabChange }) {
   const { state } = useDashboard();
   const { robotStatus } = state;
-  const battColor = getBatteryColor(robotStatus.battery);
+  const [time, setTime] = useState(new Date());
+
+  useEffect(() => {
+    const t = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(t);
+  }, []);
 
   const unread = state.alerts.filter((a) => a.status === 'new').length;
 
   const tabs = [
     { id: 'overview', label: 'Overview' },
-    { id: 'metrics', label: 'Analytics' },
-    { id: 'logs', label: 'Logs' },
-    { id: 'control', label: 'Control' },
+    { id: 'metrics',  label: 'Analytics' },
+    { id: 'logs',     label: 'Logs' },
+    { id: 'control',  label: 'Control' },
   ];
+
+  const stateDotClass =
+    robotStatus.state === 'Patrolling' ? 'state-dot--green' :
+    robotStatus.state === 'Charging'   ? 'state-dot--green' :
+    robotStatus.state              ? 'state-dot--amber' :
+                                       'state-dot--dim';
+
+  const batteryVal = robotStatus.battery != null
+    ? `${robotStatus.battery.toFixed(0)}%`
+    : '--';
+
+  const latencyVal = robotStatus.latency != null
+    ? `${robotStatus.latency}ms`
+    : '--';
 
   return (
     <header className="app-header">
-      <div className="app-header__left">
-        <div className="app-logo">
-          <span className="app-logo__icon">🤖</span>
-          <span className="app-logo__title">LabGuard</span>
-          <span className="app-logo__sub">Monitoring Dashboard</span>
-        </div>
+      <div className="app-logo">
+        <span className="app-logo__bar" />
+        <span className="app-logo__title">LabGuard</span>
       </div>
 
       <nav className="app-header__tabs">
@@ -34,7 +50,7 @@ export default function Header({ activeTab, onTabChange }) {
           >
             {tab.label}
             {tab.id === 'overview' && unread > 0 && (
-              <span className="badge badge--red badge--sm">{unread}</span>
+              <span className="badge badge--red">{unread}</span>
             )}
           </button>
         ))}
@@ -42,25 +58,21 @@ export default function Header({ activeTab, onTabChange }) {
 
       <div className="app-header__right">
         <div className="status-pill">
-          <span
-            className="state-dot"
-            style={{
-              background: robotStatus.state === 'Patrolling' ? '#4caf50' : '#f5a623',
-            }}
-          />
-          <span>{robotStatus.state}</span>
-        </div>
-
-        <div className="status-pill" style={{ color: battColor }}>
-          🔋 {robotStatus.battery.toFixed(0)}%
+          <span className={`state-dot ${stateDotClass}`} />
+          <span>{robotStatus.state ?? '--'}</span>
         </div>
 
         <div className="status-pill">
-          📶 {robotStatus.latency}ms
+          <span>Batt</span>
+          <span style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 600 }}>{batteryVal}</span>
         </div>
 
-        <div className="status-pill muted">
-          {new Date().toLocaleTimeString()}
+        <div className="status-pill">
+          <span>{latencyVal}</span>
+        </div>
+
+        <div className="status-pill" style={{ color: 'var(--text-3)' }}>
+          {time.toLocaleTimeString()}
         </div>
       </div>
     </header>

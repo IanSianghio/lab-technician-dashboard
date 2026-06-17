@@ -9,105 +9,100 @@ import {
   Title,
   Tooltip,
   Legend,
-  ArcElement,
 } from 'chart.js';
-import { Bar, Line } from 'react-chartjs-2';
+import { Bar } from 'react-chartjs-2';
 import { mockDetectionHistory, mockConfidenceDistribution } from '../../data/mockData';
 
 ChartJS.register(
   CategoryScale, LinearScale, BarElement, LineElement, PointElement,
-  Title, Tooltip, Legend, ArcElement
+  Title, Tooltip, Legend
 );
 
-function MetricGauge({ label, value, color }) {
+const chartOptions = {
+  responsive: true,
+  plugins: {
+    legend: { labels: { color: '#94a3b8', font: { size: 11 } } },
+  },
+  scales: {
+    x: { ticks: { color: '#475569', font: { size: 10 } }, grid: { color: '#1e293b' } },
+    y: { ticks: { color: '#475569', font: { size: 10 } }, grid: { color: '#1e293b' } },
+  },
+};
+
+function KpiCard({ label, value, color }) {
+  const display = value != null ? `${(value * 100).toFixed(1)}%` : null;
+  const fill = value != null ? `${value * 100}%` : '0%';
   return (
-    <div className="metric-gauge">
-      <label>{label}</label>
-      <div className="gauge-bar">
-        <div className="gauge-fill" style={{ width: `${value * 100}%`, background: color }} />
+    <div className="kpi-card">
+      <span className="kpi-card__label">{label}</span>
+      <span className={`kpi-card__value ${display ? '' : 'kpi-card__value--placeholder'}`}>
+        {display ?? '--'}
+      </span>
+      <div className="kpi-bar">
+        <div className="kpi-fill" style={{ width: fill, background: color }} />
       </div>
-      <span style={{ color }}>{(value * 100).toFixed(1)}%</span>
     </div>
   );
 }
 
-const chartOptions = {
-  responsive: true,
-  plugins: { legend: { labels: { color: '#aac' } } },
-  scales: {
-    x: { ticks: { color: '#aac' }, grid: { color: '#1a2535' } },
-    y: { ticks: { color: '#aac' }, grid: { color: '#1a2535' } },
-  },
-};
+function SummaryCard({ label, value, colorClass }) {
+  const isNull = value == null;
+  return (
+    <div className="summary-card">
+      <span className={`summary-num ${isNull ? 'summary-num--placeholder' : colorClass ?? ''}`}>
+        {value ?? '--'}
+      </span>
+      <span className="summary-label">{label}</span>
+    </div>
+  );
+}
 
 export default function MetricsDashboard() {
   const { state } = useDashboard();
   const { metrics } = state;
 
-  const detectionChartData = {
+  const detectionData = {
     labels: mockDetectionHistory.map((d) => `${d.hour}:00`),
     datasets: [
-      {
-        label: 'Detections',
-        data: mockDetectionHistory.map((d) => d.detections),
-        backgroundColor: '#4a6fa5',
-      },
-      {
-        label: 'Anomalies',
-        data: mockDetectionHistory.map((d) => d.anomalies),
-        backgroundColor: '#e94560',
-      },
+      { label: 'Detections', data: mockDetectionHistory.map((d) => d.detections), backgroundColor: '#334155' },
+      { label: 'Anomalies',  data: mockDetectionHistory.map((d) => d.anomalies),  backgroundColor: '#ef4444' },
     ],
   };
 
   const confidenceData = {
     labels: mockConfidenceDistribution.map((d) => d.range),
     datasets: [
-      {
-        label: 'Count',
-        data: mockConfidenceDistribution.map((d) => d.count),
-        backgroundColor: '#00b4d8',
-      },
+      { label: 'Count', data: mockConfidenceDistribution.map((d) => d.count), backgroundColor: '#00e5ff' },
     ],
   };
 
   return (
     <div className="metrics-dashboard">
-      <h3>Detection Performance</h3>
+      <div>
+        <p className="metrics-section-title">Detection Performance</p>
+      </div>
 
-      <div className="metrics-gauges">
-        <MetricGauge label="Precision" value={metrics.precision} color="#4caf50" />
-        <MetricGauge label="Recall" value={metrics.recall} color="#00e5ff" />
-        <MetricGauge label="F1 Score" value={metrics.f1Score} color="#f5a623" />
-        <MetricGauge label="AUC" value={metrics.auc} color="#9c27b0" />
+      <div className="metrics-kpis">
+        <KpiCard label="Precision" value={metrics.precision} color="var(--green)"  />
+        <KpiCard label="Recall"    value={metrics.recall}    color="var(--accent)" />
+        <KpiCard label="F1 Score"  value={metrics.f1Score}   color="var(--orange)" />
+        <KpiCard label="AUC"       value={metrics.auc}       color="var(--purple)" />
       </div>
 
       <div className="metrics-summary">
-        <div className="summary-item">
-          <span className="summary-num">{metrics.totalDetections}</span>
-          <span className="summary-label">Total Detections</span>
-        </div>
-        <div className="summary-item">
-          <span className="summary-num text-red">{metrics.confirmedAnomalies}</span>
-          <span className="summary-label">Confirmed</span>
-        </div>
-        <div className="summary-item">
-          <span className="summary-num text-orange">{metrics.falsePositives}</span>
-          <span className="summary-label">False Positives</span>
-        </div>
-        <div className="summary-item">
-          <span className="summary-num">{(state.threshold * 100).toFixed(0)}%</span>
-          <span className="summary-label">Threshold</span>
-        </div>
+        <SummaryCard label="Total Detections" value={metrics.totalDetections} />
+        <SummaryCard label="Confirmed"        value={metrics.confirmedAnomalies} colorClass="text-red" />
+        <SummaryCard label="False Positives"  value={metrics.falsePositives}    colorClass="text-orange" />
+        <SummaryCard label="Threshold"        value={metrics.threshold != null ? `${(metrics.threshold * 100).toFixed(0)}%` : null} />
       </div>
 
       <div className="metrics-charts">
-        <div className="chart-wrap">
-          <h4>Detections Per Hour</h4>
-          <Bar data={detectionChartData} options={chartOptions} />
+        <div className="chart-card">
+          <p className="chart-card__title">Detections Per Hour</p>
+          <Bar data={detectionData} options={chartOptions} />
         </div>
-        <div className="chart-wrap">
-          <h4>Confidence Distribution</h4>
+        <div className="chart-card">
+          <p className="chart-card__title">Confidence Distribution</p>
           <Bar data={confidenceData} options={chartOptions} />
         </div>
       </div>

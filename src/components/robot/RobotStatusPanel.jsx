@@ -1,96 +1,88 @@
 import { useDashboard } from '../../context/DashboardContext';
-import { getBatteryColor, formatRelativeTime } from '../../utils/helpers';
 
-function SignalBars({ strength }) {
+function fmt(v, suffix = '') {
+  return v != null ? `${v}${suffix}` : '--';
+}
+
+function StatCard({ label, children }) {
   return (
-    <span className="signal-bars">
-      {[1, 2, 3, 4].map((i) => (
-        <span
-          key={i}
-          className="signal-bar"
-          style={{
-            height: `${i * 4}px`,
-            background: i <= strength ? '#00e5ff' : '#2a3a4a',
-          }}
-        />
-      ))}
-    </span>
+    <div className="stat-card">
+      <span className="stat-card__label">{label}</span>
+      {children}
+    </div>
   );
 }
 
+function sensorStatusClass(val) {
+  if (val === 'Connected' || val === 'Active' || val === 'Online') return 'sensor-row__status--ok';
+  if (val == null) return 'sensor-row__status--dim';
+  return 'sensor-row__status--err';
+}
+
+function stateBadgeClass(state) {
+  if (state === 'Patrolling') return 'state-badge--patrol';
+  if (state === 'Charging')   return 'state-badge--charging';
+  if (state === 'Idle')       return 'state-badge--idle';
+  if (state === 'Error')      return 'state-badge--error';
+  return 'state-badge--dim';
+}
+
 export default function RobotStatusPanel() {
-  const { state, dispatch } = useDashboard();
-  const { robotStatus } = state;
+  const { state } = useDashboard();
+  const r = state.robotStatus;
 
-  const battColor = getBatteryColor(robotStatus.battery);
-  const battWidth = `${Math.max(2, robotStatus.battery)}%`;
-
-  const stateColors = {
-    Patrolling: '#4caf50',
-    Idle: '#f5a623',
-    Charging: '#00e5ff',
-    Error: '#e94560',
-  };
+  const battPct = r.battery != null ? Math.max(2, r.battery) : 0;
+  const battColor =
+    r.battery == null  ? 'var(--text-3)' :
+    r.battery < 20     ? 'var(--red)'    :
+    r.battery < 50     ? 'var(--orange)' :
+                         'var(--green)';
 
   return (
-    <div className="robot-status">
-      <div className="robot-status__header">
-        <h3>Robot Status</h3>
-        <span className="state-badge" style={{ background: stateColors[robotStatus.state] || '#555' }}>
-          {robotStatus.state}
+    <div className="panel robot-status">
+      <div className="robot-status__header panel__header">
+        <span className="panel__title">Robot Status</span>
+        <span className={`state-badge ${stateBadgeClass(r.state)}`}>
+          {r.state ?? '--'}
         </span>
       </div>
 
       <div className="robot-status__grid">
-        {/* Battery */}
-        <div className="status-card">
-          <label>Battery</label>
+        <StatCard label="Battery">
           <div className="battery-bar">
-            <div className="battery-fill" style={{ width: battWidth, background: battColor }} />
+            <div className="battery-fill" style={{ width: `${battPct}%`, background: battColor }} />
           </div>
-          <span style={{ color: battColor }}>{robotStatus.battery.toFixed(0)}%</span>
-          {robotStatus.battery < 20 && (
-            <span className="warning-text">⚠ Low Battery</span>
-          )}
-        </div>
+          <span className="stat-card__value" style={{ color: battColor, fontSize: 15 }}>
+            {fmt(r.battery != null ? r.battery.toFixed(0) : null, '%')}
+          </span>
+        </StatCard>
 
-        {/* Connectivity */}
-        <div className="status-card">
-          <label>Connectivity</label>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <SignalBars strength={robotStatus.wifiStrength} />
-            <span>{robotStatus.latency}ms</span>
-          </div>
-        </div>
+        <StatCard label="Latency">
+          <span className="stat-card__value">{fmt(r.latency, 'ms')}</span>
+          <span className="stat-card__sub">Speed: {fmt(r.speed, ' m/s')}</span>
+        </StatCard>
 
-        {/* Navigation */}
-        <div className="status-card">
-          <label>Navigation</label>
-          <div>Speed: {robotStatus.speed} m/s</div>
-          <div>WP: {robotStatus.currentWaypoint} / {robotStatus.totalWaypoints}</div>
-          <div>Coverage: {robotStatus.coverage}%</div>
-        </div>
+        <StatCard label="Navigation">
+          <span className="stat-card__value" style={{ fontSize: 13 }}>
+            WP {r.currentWaypoint ?? '--'} / {r.totalWaypoints ?? '--'}
+          </span>
+          <span className="stat-card__sub">Coverage: {fmt(r.coverage, '%')}</span>
+        </StatCard>
 
-        {/* Sensor Health */}
-        <div className="status-card">
-          <label>Sensors</label>
+        <StatCard label="Sensors">
           {[
-            { name: 'OAK-D Camera', val: robotStatus.camera },
-            { name: 'SLAM', val: robotStatus.slam },
-            { name: 'Platform', val: robotStatus.platform },
+            { name: 'Camera',   val: r.camera },
+            { name: 'SLAM',     val: r.slam },
+            { name: 'Platform', val: r.platform },
           ].map(({ name, val }) => (
             <div key={name} className="sensor-row">
               <span>{name}</span>
-              <span className={val === 'Connected' || val === 'Active' || val === 'Online' ? 'text-green' : 'text-red'}>
-                {val}
+              <span className={`sensor-row__status ${sensorStatusClass(val)}`}>
+                {val ?? '--'}
               </span>
             </div>
           ))}
-        </div>
-      </div>
-
-      <div className="robot-status__last-update">
-        Updated {formatRelativeTime(robotStatus.lastUpdated)}
+        </StatCard>
       </div>
     </div>
   );

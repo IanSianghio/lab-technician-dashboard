@@ -7,6 +7,10 @@ const MAP_W = 12;
 const MAP_H = 10;
 const CELL = 50;
 
+function toSVG(x, y) {
+  return { cx: x * CELL + CELL / 2, cy: (MAP_H - y) * CELL - CELL / 2 };
+}
+
 export default function LabMap() {
   const { state } = useDashboard();
   const { robotStatus, alerts } = state;
@@ -16,58 +20,51 @@ export default function LabMap() {
     [alerts]
   );
 
-  function toSVG(x, y) {
-    return { cx: x * CELL + CELL / 2, cy: (MAP_H - y) * CELL - CELL / 2 };
-  }
-
   const routePoints = mockPatrolRoute
-    .map(({ x, y }) => {
-      const p = toSVG(x, y);
-      return `${p.cx},${p.cy}`;
-    })
+    .map(({ x, y }) => { const p = toSVG(x, y); return `${p.cx},${p.cy}`; })
     .join(' ');
 
-  const robotPos = toSVG(robotStatus.position.x, robotStatus.position.y);
+  const robotPos = robotStatus.position.x != null && robotStatus.position.y != null
+    ? toSVG(robotStatus.position.x, robotStatus.position.y)
+    : null;
 
   return (
-    <div className="lab-map">
-      <div className="lab-map__header">
-        <span>2D Lab Map</span>
-        <span className="muted">Coverage: {robotStatus.coverage}%</span>
+    <div className="panel lab-map">
+      <div className="lab-map__header panel__header">
+        <span className="panel__title">2D Lab Map</span>
+        <span className="muted" style={{ fontSize: 11 }}>
+          Coverage: {robotStatus.coverage != null ? `${robotStatus.coverage}%` : '--'}
+        </span>
       </div>
 
       <div className="lab-map__svg-wrap">
-        <svg
-          viewBox={`0 0 ${MAP_W * CELL} ${MAP_H * CELL}`}
-          className="lab-map__svg"
-        >
+        <svg viewBox={`0 0 ${MAP_W * CELL} ${MAP_H * CELL}`} className="lab-map__svg">
           {/* Grid */}
           {Array.from({ length: MAP_W + 1 }).map((_, i) => (
-            <line key={`vl-${i}`} x1={i * CELL} y1={0} x2={i * CELL} y2={MAP_H * CELL} stroke="#1e2a3a" strokeWidth={1} />
+            <line key={`v${i}`} x1={i * CELL} y1={0} x2={i * CELL} y2={MAP_H * CELL} stroke="#1e293b" strokeWidth={1} />
           ))}
           {Array.from({ length: MAP_H + 1 }).map((_, i) => (
-            <line key={`hl-${i}`} x1={0} y1={i * CELL} x2={MAP_W * CELL} y2={i * CELL} stroke="#1e2a3a" strokeWidth={1} />
+            <line key={`h${i}`} x1={0} y1={i * CELL} x2={MAP_W * CELL} y2={i * CELL} stroke="#1e293b" strokeWidth={1} />
           ))}
 
-          {/* Lab zones */}
-          <rect x={0} y={0} width={MAP_W * CELL * 0.5} height={MAP_H * CELL * 0.5} fill="#0f2132" opacity={0.5} />
-          <text x={10} y={20} fill="#4a6fa5" fontSize={11}>Zone A</text>
-          <rect x={MAP_W * CELL * 0.5} y={0} width={MAP_W * CELL * 0.5} height={MAP_H * CELL * 0.5} fill="#0a1e2e" opacity={0.5} />
-          <text x={MAP_W * CELL * 0.5 + 10} y={20} fill="#4a6fa5" fontSize={11}>Zone B</text>
-          <rect x={0} y={MAP_H * CELL * 0.5} width={MAP_W * CELL * 0.5} height={MAP_H * CELL * 0.5} fill="#111e2e" opacity={0.5} />
-          <text x={10} y={MAP_H * CELL * 0.5 + 20} fill="#4a6fa5" fontSize={11}>Zone C</text>
-          <rect x={MAP_W * CELL * 0.5} y={MAP_H * CELL * 0.5} width={MAP_W * CELL * 0.5} height={MAP_H * CELL * 0.5} fill="#0e1a28" opacity={0.5} />
-          <text x={MAP_W * CELL * 0.5 + 10} y={MAP_H * CELL * 0.5 + 20} fill="#4a6fa5" fontSize={11}>Zone D</text>
+          {/* Zones */}
+          {[
+            { x: 0,                  y: 0,                  label: 'Zone A' },
+            { x: MAP_W * CELL * 0.5, y: 0,                  label: 'Zone B' },
+            { x: 0,                  y: MAP_H * CELL * 0.5, label: 'Zone C' },
+            { x: MAP_W * CELL * 0.5, y: MAP_H * CELL * 0.5, label: 'Zone D' },
+          ].map(({ x, y, label }) => (
+            <g key={label}>
+              <rect x={x} y={y} width={MAP_W * CELL * 0.5} height={MAP_H * CELL * 0.5} fill="#0f172a" opacity={0.6} />
+              <text x={x + 10} y={y + 18} fill="#334155" fontSize={11} fontWeight={600}>{label}</text>
+            </g>
+          ))}
 
           {/* Patrol route */}
-          <polyline points={routePoints} fill="none" stroke="#4a6fa5" strokeWidth={1.5} strokeDasharray="5,4" opacity={0.6} />
+          <polyline points={routePoints} fill="none" stroke="#334155" strokeWidth={1.5} strokeDasharray="6,5" />
           {mockPatrolRoute.map(({ id, x, y }) => {
             const p = toSVG(x, y);
-            return (
-              <circle key={id} cx={p.cx} cy={p.cy} r={4} fill="#4a6fa5" opacity={0.7}>
-                <title>{id}</title>
-              </circle>
-            );
+            return <circle key={id} cx={p.cx} cy={p.cy} r={3} fill="#334155"><title>{id}</title></circle>;
           })}
 
           {/* Alert markers */}
@@ -75,14 +72,8 @@ export default function LabMap() {
             const p = toSVG(alert.location.x, alert.location.y);
             return (
               <g key={alert.id}>
-                <circle
-                  cx={p.cx}
-                  cy={p.cy}
-                  r={8}
-                  fill={getSeverityColor(alert.confidence)}
-                  opacity={0.8}
-                />
-                <text cx={p.cx} cy={p.cy} x={p.cx} y={p.cy - 12} fill="#fff" fontSize={9} textAnchor="middle">
+                <circle cx={p.cx} cy={p.cy} r={7} fill={getSeverityColor(alert.confidence)} opacity={0.85} />
+                <text x={p.cx} y={p.cy - 11} fill="#f1f5f9" fontSize={8} textAnchor="middle">
                   {alert.type.split(' ')[0]}
                 </text>
               </g>
@@ -90,23 +81,34 @@ export default function LabMap() {
           })}
 
           {/* Robot */}
-          <g transform={`translate(${robotPos.cx}, ${robotPos.cy}) rotate(${robotStatus.heading})`}>
-            <polygon points="0,-10 8,8 0,4 -8,8" fill="#00e5ff" />
-          </g>
-          <circle cx={robotPos.cx} cy={robotPos.cy} r={12} fill="none" stroke="#00e5ff" strokeWidth={1} opacity={0.4} />
+          {robotPos && (
+            <g transform={`translate(${robotPos.cx}, ${robotPos.cy}) rotate(${robotStatus.heading})`}>
+              <polygon points="0,-10 7,7 0,3 -7,7" fill="#00e5ff" />
+              <circle cx={0} cy={0} r={13} fill="none" stroke="#00e5ff" strokeWidth={1} opacity={0.3} />
+            </g>
+          )}
         </svg>
       </div>
 
-      <div className="lab-map__legend">
-        <span><span style={{ color: '#00e5ff' }}>▲</span> Robot</span>
-        <span><span style={{ color: '#e94560' }}>●</span> Critical</span>
-        <span><span style={{ color: '#f5a623' }}>●</span> Warning</span>
-        <span><span style={{ color: '#4a6fa5' }}>--</span> Route</span>
-      </div>
-
-      <div className="lab-map__info">
-        <span>Position: ({robotStatus.position.x}, {robotStatus.position.y})</span>
-        <span>Waypoint: {robotStatus.currentWaypoint}/{robotStatus.totalWaypoints}</span>
+      <div className="lab-map__footer">
+        <div className="lab-map__legend">
+          <span className="lab-map__legend-item">
+            <svg width="10" height="10"><polygon points="5,0 10,10 5,7 0,10" fill="#00e5ff"/></svg>
+            Robot
+          </span>
+          <span className="lab-map__legend-item">
+            <svg width="8" height="8"><circle cx="4" cy="4" r="4" fill="var(--red)"/></svg>
+            Critical
+          </span>
+          <span className="lab-map__legend-item">
+            <svg width="8" height="8"><circle cx="4" cy="4" r="4" fill="var(--orange)"/></svg>
+            Warning
+          </span>
+          <span className="lab-map__legend-item" style={{ color: '#334155' }}>— Route</span>
+        </div>
+        <div className="lab-map__info">
+          <span>WP: {robotStatus.currentWaypoint ?? '--'} / {robotStatus.totalWaypoints ?? '--'}</span>
+        </div>
       </div>
     </div>
   );

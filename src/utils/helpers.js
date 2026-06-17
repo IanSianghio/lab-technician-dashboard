@@ -19,9 +19,10 @@ export function getAlertSeverity(confidence) {
 }
 
 export function getSeverityColor(confidence) {
-  if (confidence >= 0.85) return '#e94560';
-  if (confidence >= 0.6) return '#f5a623';
-  return '#f5c842';
+  if (confidence == null) return 'var(--text-3)';
+  if (confidence >= 0.85) return 'var(--red)';
+  if (confidence >= 0.60) return 'var(--orange)';
+  return 'var(--text-3)';
 }
 
 export function getStatusColor(status) {

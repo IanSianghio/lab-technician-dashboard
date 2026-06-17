@@ -1,7 +1,3 @@
-import { subMinutes, subHours, subDays, format } from 'date-fns';
-
-const now = new Date();
-
 export const ANOMALY_TYPES = [
   'Chemical Spill',
   'Broken Glassware',
@@ -14,119 +10,56 @@ export const ANOMALY_TYPES = [
 export const ZONES = ['Zone A', 'Zone B', 'Zone C', 'Zone D', 'Storage'];
 
 export const mockAlerts = [
-  {
-    id: 'alert-001',
-    type: 'Chemical Spill',
-    zone: 'Zone A',
-    location: { x: 7.2, y: 4.1 },
-    timestamp: subMinutes(now, 5),
-    confidence: 0.92,
-    status: 'new',
-    imageUrl: 'https://placehold.co/640x480/1a1a2e/e94560?text=Chemical+Spill+Detected',
-    notes: '',
-  },
-  {
-    id: 'alert-002',
-    type: 'Broken Glassware',
-    zone: 'Zone B',
-    location: { x: 3.5, y: 8.2 },
-    timestamp: subMinutes(now, 18),
-    confidence: 0.87,
-    status: 'acknowledged',
-    imageUrl: 'https://placehold.co/640x480/1a1a2e/f5a623?text=Broken+Glassware+Detected',
-    notes: 'Beaker shards near centrifuge.',
-  },
-  {
-    id: 'alert-003',
-    type: 'Misplaced Equipment',
-    zone: 'Zone C',
-    location: { x: 5.0, y: 2.8 },
-    timestamp: subHours(now, 1),
-    confidence: 0.65,
-    status: 'resolved',
-    imageUrl: 'https://placehold.co/640x480/1a1a2e/00b4d8?text=Misplaced+Equipment',
-    notes: 'Pipette left on bench.',
-  },
-  {
-    id: 'alert-004',
-    type: 'Overheating Apparatus',
-    zone: 'Zone D',
-    location: { x: 9.1, y: 6.3 },
-    timestamp: subHours(now, 2),
-    confidence: 0.78,
-    status: 'new',
-    imageUrl: 'https://placehold.co/640x480/1a1a2e/e94560?text=Overheating+Apparatus',
-    notes: '',
-  },
-  {
-    id: 'alert-005',
-    type: 'Unattended Glassware',
-    zone: 'Zone A',
-    location: { x: 2.4, y: 5.6 },
-    timestamp: subHours(now, 3),
-    confidence: 0.55,
-    status: 'acknowledged',
-    imageUrl: 'https://placehold.co/640x480/1a1a2e/f5a623?text=Unattended+Glassware',
-    notes: '',
-  },
-  {
-    id: 'alert-006',
-    type: 'Chemical Spill',
-    zone: 'Zone B',
-    location: { x: 6.8, y: 1.9 },
-    timestamp: subDays(now, 1),
-    confidence: 0.96,
-    status: 'resolved',
-    imageUrl: 'https://placehold.co/640x480/1a1a2e/e94560?text=Chemical+Spill',
-    notes: 'HCl spill cleaned and neutralized.',
-  },
+  { id: 'alert-001', type: 'Chemical Spill',       zone: 'Zone A', location: { x: 7.2, y: 4.1 }, timestamp: new Date(), confidence: null, status: 'new',          imageUrl: null, notes: '' },
+  { id: 'alert-002', type: 'Broken Glassware',     zone: 'Zone B', location: { x: 3.5, y: 8.2 }, timestamp: new Date(), confidence: null, status: 'acknowledged', imageUrl: null, notes: '' },
+  { id: 'alert-003', type: 'Misplaced Equipment',  zone: 'Zone C', location: { x: 5.0, y: 2.8 }, timestamp: new Date(), confidence: null, status: 'resolved',     imageUrl: null, notes: '' },
 ];
 
 export const mockRobotStatus = {
-  state: 'Patrolling',
-  battery: 74,
+  state: null,
+  battery: null,
   charging: false,
-  wifiStrength: 3,
-  latency: 45,
-  speed: 0.3,
-  position: { x: 5.2, y: 3.1 },
-  heading: 42,
-  coverage: 65,
-  currentWaypoint: 'WP-04',
-  totalWaypoints: 8,
-  camera: 'Connected',
-  slam: 'Active',
-  platform: 'Online',
-  lastUpdated: new Date(),
+  wifiStrength: null,
+  latency: null,
+  speed: null,
+  position: { x: null, y: null },
+  heading: 0,
+  coverage: null,
+  currentWaypoint: null,
+  totalWaypoints: null,
+  camera: null,
+  slam: null,
+  platform: null,
+  lastUpdated: null,
 };
 
 export const mockEnvReadings = {
-  temperature: { value: 22.4, unit: '°C', min: 18, max: 28, status: 'normal' },
-  humidity: { value: 48, unit: '%', min: 30, max: 60, status: 'normal' },
-  pressure: { value: 1013.2, unit: 'hPa', min: 980, max: 1050, status: 'normal' },
-  lastUpdated: new Date(),
+  temperature: { value: null, unit: '°C', min: 18, max: 28, status: null },
+  humidity:    { value: null, unit: '%',  min: 30, max: 60, status: null },
+  pressure:    { value: null, unit: 'hPa',min: 980,max: 1050, status: null },
+  lastUpdated: null,
 };
 
 export const mockMetrics = {
-  precision: 0.94,
-  recall: 0.88,
-  f1Score: 0.91,
-  auc: 0.96,
-  threshold: 0.25,
-  totalDetections: 142,
-  confirmedAnomalies: 38,
-  falsePositives: 9,
+  precision:          null,
+  recall:             null,
+  f1Score:            null,
+  auc:                null,
+  threshold:          0.25,
+  totalDetections:    null,
+  confirmedAnomalies: null,
+  falsePositives:     null,
 };
 
 export const mockDetectionHistory = Array.from({ length: 24 }, (_, i) => ({
   hour: i,
-  detections: Math.floor(Math.random() * 8),
-  anomalies: Math.floor(Math.random() * 3),
+  detections: 0,
+  anomalies: 0,
 }));
 
 export const mockConfidenceDistribution = Array.from({ length: 10 }, (_, i) => ({
   range: `${i * 10}-${(i + 1) * 10}%`,
-  count: Math.floor(Math.random() * 20) + 1,
+  count: 0,
 }));
 
 export const mockPatrolRoute = [

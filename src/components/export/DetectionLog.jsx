@@ -36,10 +36,8 @@ export default function DetectionLog() {
       id: a.id,
       type: a.type,
       zone: a.zone,
-      x: a.location.x,
-      y: a.location.y,
       timestamp: formatDate(a.timestamp),
-      confidence: a.confidence,
+      confidence: a.confidence ?? '',
       status: a.status,
       notes: a.notes,
     }));
@@ -49,7 +47,7 @@ export default function DetectionLog() {
   return (
     <div className="detection-log">
       <div className="detection-log__header">
-        <h3>Detection Log</h3>
+        <span className="detection-log__title">Detection Log</span>
         <button className="btn btn--sm btn--ghost" onClick={handleExport}>Export CSV</button>
       </div>
 
@@ -60,12 +58,13 @@ export default function DetectionLog() {
           value={search}
           onChange={(e) => { setSearch(e.target.value); setPage(0); }}
           className="input-sm"
+          style={{ flex: 1, maxWidth: 240 }}
         />
-        <select value={filterType} onChange={(e) => { setFilterType(e.target.value); setPage(0); }} className="select-sm">
+        <select value={filterType} onChange={(e) => { setFilterType(e.target.value); setPage(0); }} className="select-sm" style={{ width: 160 }}>
           <option value="all">All Types</option>
           {ANOMALY_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
         </select>
-        <select value={filterStatus} onChange={(e) => { setFilterStatus(e.target.value); setPage(0); }} className="select-sm">
+        <select value={filterStatus} onChange={(e) => { setFilterStatus(e.target.value); setPage(0); }} className="select-sm" style={{ width: 140 }}>
           <option value="all">All Status</option>
           <option value="new">New</option>
           <option value="acknowledged">Acknowledged</option>
@@ -89,16 +88,16 @@ export default function DetectionLog() {
           <tbody>
             {paginated.map((a) => (
               <tr key={a.id}>
-                <td className="muted">{formatDate(a.timestamp)}</td>
-                <td>{a.type}</td>
+                <td>{formatDate(a.timestamp)}</td>
+                <td style={{ color: 'var(--text-1)', fontWeight: 500 }}>{a.type}</td>
                 <td>{a.zone}</td>
                 <td style={{ color: getSeverityColor(a.confidence) }}>
-                  {(a.confidence * 100).toFixed(1)}%
+                  {a.confidence != null ? `${(a.confidence * 100).toFixed(1)}%` : '--'}
                 </td>
-                <td style={{ color: getStatusColor(a.status) }}>
-                  {a.status}
+                <td>
+                  <span className={`chip chip--${a.status}`}>{a.status}</span>
                 </td>
-                <td className="muted">{a.notes || '—'}</td>
+                <td>{a.notes || <span className="muted">—</span>}</td>
               </tr>
             ))}
             {paginated.length === 0 && (
@@ -109,19 +108,11 @@ export default function DetectionLog() {
       </div>
 
       <div className="pagination">
-        <button
-          className="btn btn--sm btn--ghost"
-          disabled={page === 0}
-          onClick={() => setPage((p) => p - 1)}
-        >
+        <button className="btn btn--sm btn--ghost" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>
           ← Prev
         </button>
-        <span className="muted">Page {page + 1} of {Math.max(1, totalPages)}</span>
-        <button
-          className="btn btn--sm btn--ghost"
-          disabled={page >= totalPages - 1}
-          onClick={() => setPage((p) => p + 1)}
-        >
+        <span className="muted" style={{ fontSize: 12 }}>Page {page + 1} of {Math.max(1, totalPages)}</span>
+        <button className="btn btn--sm btn--ghost" disabled={page >= totalPages - 1} onClick={() => setPage((p) => p + 1)}>
           Next →
         </button>
       </div>
