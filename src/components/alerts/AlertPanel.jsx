@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useDashboard } from '../../context/DashboardContext';
+import { useDashboard } from '../../context/useDashboard';
 import AlertCard from './AlertCard';
 import AlertFilters from './AlertFilters';
 

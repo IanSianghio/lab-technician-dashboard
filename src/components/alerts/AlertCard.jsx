@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useDashboard } from '../../context/DashboardContext';
+import { useDashboard } from '../../context/useDashboard';
 import { formatRelativeTime } from '../../utils/helpers';
 import AlertDetail from './AlertDetail';
 
@@ -44,8 +44,6 @@ export default function AlertCard({ alert }) {
         </div>
 
         <div className="alert-card__meta">
-          <span className="alert-card__zone">{alert.zone}</span>
-          <span className="alert-card__dot">·</span>
           <span className="alert-card__time">{formatRelativeTime(alert.timestamp)}</span>
         </div>
 
