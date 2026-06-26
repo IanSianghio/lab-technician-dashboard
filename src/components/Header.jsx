@@ -17,7 +17,6 @@ export default function Header({ activeTab, onTabChange }) {
     { id: 'overview', label: 'Overview' },
     { id: 'metrics',  label: 'Analytics' },
     { id: 'logs',     label: 'Logs' },
-    { id: 'control',  label: 'Control' },
   ];
 
   const stateDotClass =
