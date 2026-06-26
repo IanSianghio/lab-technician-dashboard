@@ -1,41 +1,37 @@
-import { useState, useEffect } from 'react';
-import { DashboardProvider, useDashboard } from './context/DashboardContext';
-import { io } from 'socket.io-client';
+import { useState, useEffect, useRef } from 'react';
+import { DashboardProvider } from './context/DashboardContext';
+import { useDashboard } from './context/useDashboard';
+import { useAlertPoller } from './hooks/useAlertPoller';
+import socket from './socket';
 import Header from './components/Header';
 import StatusBar from './components/StatusBar';
 import AlertPanel from './components/alerts/AlertPanel';
-import LabMap from './components/map/LabMap';
 import CameraFeed from './components/camera/CameraFeed';
-import RobotStatusPanel from './components/robot/RobotStatusPanel';
 import MetricsDashboard from './components/metrics/MetricsDashboard';
-
-import ControlPanel from './components/control/ControlPanel';
 import DetectionLog from './components/export/DetectionLog';
 import './App.css';
 
 function DashboardContent() {
   const [activeTab, setActiveTab] = useState('overview');
+  useAlertPoller();
   const { dispatch } = useDashboard();
+  const dispatchRef = useRef(dispatch);
+  dispatchRef.current = dispatch;
 
   useEffect(() => {
-    // Connect to the backend Node.js server running on port 3001
-    // We use window.location.hostname so it works from other devices on the network
-    const socket = io(`http://${window.location.hostname}:3001`);
+    const onConnect      = () => console.log('Connected to WebSocket server');
+    const onStatusUpdate = (data) => {
+      dispatchRef.current({ type: 'UPDATE_ROBOT_STATUS', payload: data });
+    };
 
-    socket.on('connect', () => {
-      console.log('Connected to WebSocket server');
-    });
-
-    // Listen for data coming from the Raspberry Pi -> Backend -> Here
-    socket.on('robot-status-update', (data) => {
-      console.log('Received Robot Status:', data);
-      dispatch({ type: 'UPDATE_ROBOT_STATUS', payload: data });
-    });
+    socket.on('connect', onConnect);
+    socket.on('robot-status-update', onStatusUpdate);
 
     return () => {
-      socket.disconnect();
+      socket.off('connect', onConnect);
+      socket.off('robot-status-update', onStatusUpdate);
     };
-  }, [dispatch]);
+  }, []);
 
   return (
     <div className="app">
@@ -47,11 +43,7 @@ function DashboardContent() {
             <AlertPanel />
             <div className="main-content">
               <div className="main-content__top">
-                <LabMap />
                 <CameraFeed />
-              </div>
-              <div className="main-content__bottom">
-                <RobotStatusPanel />
               </div>
             </div>
           </div>
@@ -66,12 +58,6 @@ function DashboardContent() {
         {activeTab === 'logs' && (
           <div className="layout-single">
             <DetectionLog />
-          </div>
-        )}
-
-        {activeTab === 'control' && (
-          <div className="layout-single">
-            <ControlPanel />
           </div>
         )}
       </main>
