@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useDashboard } from '../../context/useDashboard';
 
 // Base URL configuration for the Raspberry Pi
-const PI_BASE_URL = 'http://192.168.40.4:5000';
+const PI_BASE_URL = 'http://192.168.1.101:5000';
 const STREAM_URL = `${PI_BASE_URL}/video_feed`;
 
 export default function CameraFeed() {

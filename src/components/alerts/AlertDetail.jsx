@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useDashboard } from '../../context/useDashboard';
 import { formatDate, getSeverityColor } from '../../utils/helpers';
 
-const PI_BASE_URL = 'http://192.168.40.4:5000';
+const PI_BASE_URL = 'http://192.168.1.101:5000';
 
 export default function AlertDetail({ alert, onClose }) {
   const { dispatch } = useDashboard();

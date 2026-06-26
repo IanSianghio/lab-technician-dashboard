@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-const PI_URL   = 'http://192.168.40.4:5000';
+const PI_URL   = 'http://192.168.1.101:5000';
 const REFRESH_MS = 30000; // refresh logs every 30 seconds
 
 export default function DetectionLog() {
