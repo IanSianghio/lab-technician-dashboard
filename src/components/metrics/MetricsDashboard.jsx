@@ -101,13 +101,6 @@ export default function MetricsDashboard() {
         <p className="metrics-section-title">Detection Performance</p>
       </div>
 
-      <div className="metrics-kpis">
-        <KpiCard label="Precision" value={metrics.precision} color="var(--green)"  />
-        <KpiCard label="Recall"    value={metrics.recall}    color="var(--accent)" />
-        <KpiCard label="F1 Score"  value={metrics.f1Score}   color="var(--orange)" />
-        <KpiCard label="AUC"       value={metrics.auc}       color="var(--purple)" />
-      </div>
-
       <div className="metrics-summary">
         <SummaryCard label="Total Alerts"  value={alerts.length} />
         <SummaryCard label="Active"        value={confirmedCount} colorClass="text-red" />
