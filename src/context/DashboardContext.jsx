@@ -1,7 +1,7 @@
 import { createContext, useContext, useReducer } from 'react';
 import { mockAlerts, mockRobotStatus, mockEnvReadings, mockMetrics } from '../data/mockData';
 
-const DashboardContext = createContext(null);
+export const DashboardContext = createContext(null);
 
 const initialState = {
   alerts: mockAlerts,
@@ -23,7 +23,7 @@ function reducer(state, action) {
     case 'ESCALATE_ALERT':
       return { ...state, alerts: state.alerts.map((a) => a.id === action.id ? { ...a, status: 'escalated' } : a) };
     case 'ADD_ALERT':
-      return { ...state, alerts: [action.alert, ...state.alerts] };
+      return { ...state, alerts: [{ status: 'new', ...action.alert }, ...state.alerts] };
     case 'SET_THRESHOLD':
       return { ...state, threshold: action.value };
     case 'TOGGLE_NOTIFICATIONS':
@@ -46,10 +46,4 @@ export function DashboardProvider({ children }) {
       {children}
     </DashboardContext.Provider>
   );
-}
-
-export function useDashboard() {
-  const ctx = useContext(DashboardContext);
-  if (!ctx) throw new Error('useDashboard must be used within DashboardProvider');
-  return ctx;
 }
