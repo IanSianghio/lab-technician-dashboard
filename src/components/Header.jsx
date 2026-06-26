@@ -57,19 +57,6 @@ export default function Header({ activeTab, onTabChange }) {
       </nav>
 
       <div className="app-header__right">
-        <div className="status-pill">
-          <span className={`state-dot ${stateDotClass}`} />
-          <span>{robotStatus.state ?? '--'}</span>
-        </div>
-
-        <div className="status-pill">
-          <span>Batt</span>
-          <span style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 600 }}>{batteryVal}</span>
-        </div>
-
-        <div className="status-pill">
-          <span>{latencyVal}</span>
-        </div>
 
         <div className="status-pill" style={{ color: 'var(--text-3)' }}>
           {time.toLocaleTimeString()}
