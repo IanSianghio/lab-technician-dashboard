@@ -15,35 +15,8 @@ export default function StatusBar() {
   return (
     <footer className="status-bar">
       <div className="status-bar__item">
-        <span className="status-bar__label">Robot</span>
-        <span className={`status-bar__value ${stateClass}`}>{robotStatus.state ?? '--'}</span>
-      </div>
-      <div className="status-bar__item">
-        <span className="status-bar__label">Battery</span>
-        <span className="status-bar__value">{fmt(robotStatus.battery != null ? robotStatus.battery.toFixed(0) : null, '%')}</span>
-      </div>
-      <div className="status-bar__item">
         <span className="status-bar__label">Latency</span>
-        <span className="status-bar__value">{fmt(robotStatus.latency, 'ms')}</span>
-      </div>
-      <div className="status-bar__item">
-        <span className="status-bar__label">Coverage</span>
-        <span className="status-bar__value">{fmt(robotStatus.coverage, '%')}</span>
-      </div>
-
-      <div className="status-bar__sep" />
-
-      <div className="status-bar__item">
-        <span className="status-bar__label">Precision</span>
-        <span className="status-bar__value">{fmtPct(metrics.precision)}</span>
-      </div>
-      <div className="status-bar__item">
-        <span className="status-bar__label">Recall</span>
-        <span className="status-bar__value">{fmtPct(metrics.recall)}</span>
-      </div>
-      <div className="status-bar__item">
-        <span className="status-bar__label">F1</span>
-        <span className="status-bar__value">{fmtPct(metrics.f1Score)}</span>
+        <span className="status-bar__value">{fmt(state?.robotStatus?.latency ?? 0, 'ms')}</span>
       </div>
 
       <div className="status-bar__spacer" />
