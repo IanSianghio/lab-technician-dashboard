@@ -1,18 +1,28 @@
 import { useState, useEffect } from 'react';
-import { useDashboard } from '../../context/DashboardContext';
+import { useDashboard } from '../../context/useDashboard';
 
-// Change to Pi's IP when running on Pi, e.g. 'http://10.50.150.64:5000'
-const STREAM_URL = 'http://localhost:5000/video_feed';
+// Base URL configuration for the Raspberry Pi
+const PI_BASE_URL = 'http://192.168.40.4:5000';
+const STREAM_URL = `${PI_BASE_URL}/video_feed`;
 
 export default function CameraFeed() {
   const { state } = useDashboard();
-  const [fps, setFps] = useState(0);
   const [quality, setQuality] = useState('high');
   const [recording, setRecording] = useState(false);
   const [showOverlay, setShowOverlay] = useState(true);
   const [streamConnected, setStreamConnected] = useState(false);
 
-  const connected = state.robotStatus.camera === 'Connected';
+  useEffect(() => {
+    // Ping the log API endpoint on mount to verify the backend is up
+    fetch(`${PI_BASE_URL}/api/logs`)
+      .then((res) => { 
+        if (res.ok) setStreamConnected(true); 
+      })
+      .catch(() => setStreamConnected(false));
+  }, []);
+
+  // Safeguard: Fallback to 0 if context state object hasn't populated yet
+  const latencyValue = state?.robotStatus?.latency ?? 0;
 
   return (
     <div className="camera-feed">
@@ -40,13 +50,12 @@ export default function CameraFeed() {
           <img
             src={STREAM_URL}
             alt="OAK-D Live Feed"
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-            onLoad={() => setStreamConnected(true)}
-            onError={() => setStreamConnected(false)}
+            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
           />
           {recording && <div className="rec-indicator">⏺ REC</div>}
           <div className="camera-feed__latency">
-            Latency: {state.robotStatus.latency}ms
+            {/* FIXED: Swapped out raw path for the safe latencyValue variable */}
+            Latency: {latencyValue}ms
           </div>
         </div>
       </div>
@@ -58,7 +67,7 @@ export default function CameraFeed() {
         >
           {recording ? '⏹ Stop Recording' : '⏺ Record'}
         </button>
-        <span className="muted">Resolution: 640×640</span>
+        <span className="muted">Resolution: 1280×720</span>
       </div>
     </div>
   );

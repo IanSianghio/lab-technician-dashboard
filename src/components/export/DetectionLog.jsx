@@ -1,120 +1,88 @@
-import { useState, useMemo } from 'react';
-import { useDashboard } from '../../context/DashboardContext';
-import { formatDate, getSeverityColor, getStatusColor, exportToCSV } from '../../utils/helpers';
-import { ANOMALY_TYPES } from '../../data/mockData';
+import { useState, useEffect } from 'react';
 
-const PAGE_SIZE = 10;
+const PI_URL   = 'http://192.168.40.4:5000';
+const REFRESH_MS = 30000; // refresh logs every 30 seconds
 
 export default function DetectionLog() {
-  const { state } = useDashboard();
-  const [page, setPage] = useState(0);
-  const [search, setSearch] = useState('');
-  const [filterType, setFilterType] = useState('all');
-  const [filterStatus, setFilterStatus] = useState('all');
+  const [logs, setLogs]       = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState(null);
 
-  const filtered = useMemo(() => {
-    return state.alerts.filter((a) => {
-      if (filterType !== 'all' && a.type !== filterType) return false;
-      if (filterStatus !== 'all' && a.status !== filterStatus) return false;
-      if (search) {
-        const q = search.toLowerCase();
-        return (
-          a.type.toLowerCase().includes(q) ||
-          a.zone.toLowerCase().includes(q) ||
-          (a.notes || '').toLowerCase().includes(q)
-        );
-      }
-      return true;
-    });
-  }, [state.alerts, filterType, filterStatus, search]);
+  const fetchLogs = () => {
+    fetch(`${PI_URL}/api/logs`)
+      .then((r) => r.json())
+      .then((data) => {
+        setLogs(data);
+        setLoading(false);
+        setLastUpdated(new Date().toLocaleTimeString());
+      })
+      .catch(() => setLoading(false));
+  };
 
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
-  const paginated = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+  useEffect(() => {
+    fetchLogs();
+    const interval = setInterval(fetchLogs, REFRESH_MS);
+    return () => clearInterval(interval);
+  }, []);
 
-  function handleExport() {
-    const rows = filtered.map((a) => ({
-      id: a.id,
-      type: a.type,
-      zone: a.zone,
-      timestamp: formatDate(a.timestamp),
-      confidence: a.confidence ?? '',
-      status: a.status,
-      notes: a.notes,
-    }));
-    exportToCSV(rows, 'detection_log.csv');
-  }
+  const downloadCSV = () => {
+    window.open(`${PI_URL}/api/logs?format=csv`, '_blank');
+  };
+
+  if (loading) return <div className="panel"><p className="muted">Loading logs...</p></div>;
 
   return (
-    <div className="detection-log">
-      <div className="detection-log__header">
-        <span className="detection-log__title">Detection Log</span>
-        <button className="btn btn--sm btn--ghost" onClick={handleExport}>Export CSV</button>
+    <div className="panel detection-log">
+      <div className="panel__header">
+        <span className="panel__title">Detection Log</span>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          {lastUpdated && (
+            <span className="muted" style={{ fontSize: 11 }}>Updated {lastUpdated}</span>
+          )}
+          <button className="btn btn--sm btn--ghost" onClick={fetchLogs}>
+            ↻ Refresh
+          </button>
+          <button className="btn btn--sm btn--ghost" onClick={downloadCSV}>
+            ↓ Export CSV
+          </button>
+        </div>
       </div>
 
-      <div className="log-filters">
-        <input
-          type="text"
-          placeholder="Search..."
-          value={search}
-          onChange={(e) => { setSearch(e.target.value); setPage(0); }}
-          className="input-sm"
-          style={{ flex: 1, maxWidth: 240 }}
-        />
-        <select value={filterType} onChange={(e) => { setFilterType(e.target.value); setPage(0); }} className="select-sm" style={{ width: 160 }}>
-          <option value="all">All Types</option>
-          {ANOMALY_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
-        </select>
-        <select value={filterStatus} onChange={(e) => { setFilterStatus(e.target.value); setPage(0); }} className="select-sm" style={{ width: 140 }}>
-          <option value="all">All Status</option>
-          <option value="new">New</option>
-          <option value="acknowledged">Acknowledged</option>
-          <option value="resolved">Resolved</option>
-          <option value="escalated">Escalated</option>
-        </select>
-      </div>
-
-      <div className="log-table-wrap">
-        <table className="log-table">
+      <div className="detection-log__table-wrap">
+        <table className="detection-log__table">
           <thead>
             <tr>
-              <th>Time</th>
+              <th>ID</th>
+              <th>Timestamp</th>
               <th>Type</th>
-              <th>Zone</th>
               <th>Confidence</th>
-              <th>Status</th>
-              <th>Notes</th>
             </tr>
           </thead>
           <tbody>
-            {paginated.map((a) => (
-              <tr key={a.id}>
-                <td>{formatDate(a.timestamp)}</td>
-                <td style={{ color: 'var(--text-1)', fontWeight: 500 }}>{a.type}</td>
-                <td>{a.zone}</td>
-                <td style={{ color: getSeverityColor(a.confidence) }}>
-                  {a.confidence != null ? `${(a.confidence * 100).toFixed(1)}%` : '--'}
+            {(!logs || logs.length === 0) ? (
+              <tr>
+                <td colSpan={4} className="muted" style={{ textAlign: 'center', padding: '2rem' }}>
+                  No detections logged yet.
                 </td>
-                <td>
-                  <span className={`chip chip--${a.status}`}>{a.status}</span>
-                </td>
-                <td>{a.notes || <span className="muted">—</span>}</td>
               </tr>
-            ))}
-            {paginated.length === 0 && (
-              <tr><td colSpan={6} className="empty-state">No records found</td></tr>
+            ) : (
+              logs.map((row) => (
+                <tr key={row?.id}>
+                  <td className="muted" style={{ fontSize: 11 }}>{row?.id}</td>
+                  <td className="muted" style={{ fontSize: 11 }}>
+                    {row?.timestamp ? new Date(row.timestamp).toLocaleString() : '---'}
+                  </td>
+                  <td>{row?.type ?? 'Unknown'}</td>
+                  <td>
+                    {row?.confidence != null && !isNaN(parseFloat(row.confidence))
+                      ? `${(parseFloat(row.confidence) * 100).toFixed(1)}%`
+                      : '0.0%'}
+                  </td>
+                </tr>
+              ))
             )}
           </tbody>
         </table>
-      </div>
-
-      <div className="pagination">
-        <button className="btn btn--sm btn--ghost" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>
-          ← Prev
-        </button>
-        <span className="muted" style={{ fontSize: 12 }}>Page {page + 1} of {Math.max(1, totalPages)}</span>
-        <button className="btn btn--sm btn--ghost" disabled={page >= totalPages - 1} onClick={() => setPage((p) => p + 1)}>
-          Next →
-        </button>
       </div>
     </div>
   );
