@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useDashboard } from '../context/DashboardContext';
+import { useDashboard } from '../context/useDashboard';
 
 export default function Header({ activeTab, onTabChange }) {
   const { state } = useDashboard();
